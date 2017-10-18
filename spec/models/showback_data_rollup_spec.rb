@@ -1,8 +1,8 @@
 require 'spec_helper'
 require 'money-rails/test_helpers'
 
-describe ManageIQ::Consumption::ShowbackEvent do
-  let(:showback_event) { FactoryGirl.build(:showback_event) }
+describe ManageIQ::Consumption::ShowbackDataRollup do
+  let(:showback_event) { FactoryGirl.build(:showback_data_rollup) }
   context "validations" do
     it "has a valid factory" do
       expect(showback_event).to be_valid

@@ -1,5 +1,5 @@
-class ManageIQ::Consumption::ShowbackPool < ApplicationRecord
-  self.table_name = 'showback_pools'
+class ManageIQ::Consumption::ShowbackEnvelope < ApplicationRecord
+  self.table_name = 'showback_envelopes'
 
   belongs_to :resource, :polymorphic => true
 
@@ -8,12 +8,12 @@ class ManageIQ::Consumption::ShowbackPool < ApplicationRecord
 
   before_save :check_pool_state, :if => :state_changed?
 
-  has_many :showback_charges,
+  has_many :showback_data_views,
            :dependent  => :destroy,
-           :inverse_of => :showback_pool
-  has_many :showback_events,
-           :through    => :showback_charges,
-           :inverse_of => :showback_pools
+           :inverse_of => :showback_envelope
+  has_many :showback_data_rollups,
+           :through    => :showback_data_views,
+           :inverse_of => :showback_envelopes
 
   validates :name,                  :presence => true
   validates :description,           :presence => true
@@ -35,37 +35,37 @@ class ManageIQ::Consumption::ShowbackPool < ApplicationRecord
       # s_time = (self.start_time + 1.months).beginning_of_month # This is never used
       s_time = end_time != start_time.end_of_month ? end_time : (start_time + 1.month).beginning_of_month
       e_time = s_time.end_of_month
-      generate_pool(s_time, e_time) unless ManageIQ::Consumption::ShowbackPool.exists?(:resource => resource, :start_time => s_time)
+      generate_pool(s_time, e_time) unless ManageIQ::Consumption::ShowbackEnvelope.exists?(:resource => resource, :start_time => s_time)
     when 'PROCESSING' then raise _("Pool can't change state to OPEN from PROCESSING") unless state != 'OPEN'
     when 'CLOSED' then raise _("Pool can't change state when it's CLOSED")
     end
   end
 
   def add_event(event)
-    if event.kind_of?(ManageIQ::Consumption::ShowbackEvent)
+    if event.kind_of?(ManageIQ::Consumption::ShowbackDataRollup)
       # verify that the event is not already there
       if showback_events.include?(event)
         errors.add(:showback_events, 'duplicate')
       else
-        charge = ManageIQ::Consumption::ShowbackCharge.new(:showback_event => event, :showback_pool => self)
+        charge = ManageIQ::Consumption::ShowbackDataView.new(:showback_data_rollup => event, :showback_envelope => self)
         charge.save
       end
     else
-      errors.add(:showback_events, "Error Type #{event.type} is not ManageIQ::Consumption::ShowbackEvent")
+      errors.add(:showback_data_rollups, "Error Type #{event.type} is not ManageIQ::Consumption::ShowbackDataRollup")
     end
   end
 
   # Remove events from a pool, no error is thrown
 
   def remove_event(event)
-    if event.kind_of?(ManageIQ::Consumption::ShowbackEvent)
+    if event.kind_of?(ManageIQ::Consumption::ShowbackDataRollup)
       if showback_events.include?(event)
         showback_events.delete(event)
       else
-        errors.add(:showback_events, "not found")
+        errors.add(:showback_data_rollups, "not found")
       end
     else
-      errors.add(:showback_events, "Error Type #{event.type} is not ManageIQ::Consumption::ShowbackEvent")
+      errors.add(:showback_data_rollups, "Error Type #{event.type} is not ManageIQ::Consumption::ShowbackDataRollup")
     end
   end
 
@@ -91,8 +91,8 @@ class ManageIQ::Consumption::ShowbackPool < ApplicationRecord
     # updates an existing charge
     if ch
       ch.cost = Money.new(cost)
-    elsif input.class == ManageIQ::Consumption::ShowbackEvent # Or create a new one
-      ch = showback_charges.new(:showback_event => input,
+    elsif input.class == ManageIQ::Consumption::ShowbackDataRolllup # Or create a new one
+      ch = showback_data_views.new(:showback_data_rollup => input,
                                 :cost           => cost)
     else
       errors.add(:input, 'bad class')
@@ -122,14 +122,14 @@ class ManageIQ::Consumption::ShowbackPool < ApplicationRecord
 
   def calculate_charge(input)
     ch = find_charge(input)
-    if ch.kind_of?(ManageIQ::Consumption::ShowbackCharge)
+    if ch.kind_of?(ManageIQ::Consumption::ShowbackDataView)
       ch.cost = ch.calculate_cost(find_price_plan) || Money.new(0)
       save
     elsif input.nil?
-      errors.add(:showback_charge, 'not found')
+      errors.add(:showback_data_view, 'not found')
       Money.new(0)
     else
-      input.errors.add(:showback_charge, 'not found')
+      input.errors.add(:showback_data_view, 'not found')
       Money.new(0)
     end
   end
@@ -154,9 +154,9 @@ class ManageIQ::Consumption::ShowbackPool < ApplicationRecord
   end
 
   def find_charge(input)
-    if input.kind_of?(ManageIQ::Consumption::ShowbackEvent)
-      showback_charges.find_by(:showback_event => input, :showback_pool => self)
-    elsif input.kind_of?(ManageIQ::Consumption::ShowbackCharge) && (input.showback_pool == self)
+    if input.kind_of?(ManageIQ::Consumption::ShowbackDataRollup)
+      showback_charges.find_by(:showback_data_rollup => input, :showback_envelope => self)
+    elsif input.kind_of?(ManageIQ::Consumption::ShowbackDataView) && (input.showback_envelope == self)
       input
     end
   end
@@ -164,18 +164,18 @@ class ManageIQ::Consumption::ShowbackPool < ApplicationRecord
   private
 
   def generate_pool(s_time, e_time)
-    pool = ManageIQ::Consumption::ShowbackPool.create(:name        => name,
+    pool = ManageIQ::Consumption::ShowbackEnvelope.create(:name        => name,
                                                       :description => description,
                                                       :resource    => resource,
                                                       :start_time  => s_time,
                                                       :end_time    => e_time,
                                                       :state       => 'OPEN')
     showback_charges.each do |charge|
-      ManageIQ::Consumption::ShowbackCharge.create(:stored_data    => {
-                                                     charge.stored_data_last_key => charge.stored_data_last
+      ManageIQ::Consumption::ShowbackDataView.create(:data_snapshot    => {
+                                                     charge.data_snapshot_last_key => charge.data_snapshot_last
                                                    },
-                                                   :showback_event => charge.showback_event,
-                                                   :showback_pool  => pool,
+                                                   :showback_data_rollup => charge.showback_event,
+                                                   :showback_envelope  => pool,
                                                    :cost_subunits  => charge.cost_subunits,
                                                    :cost_currency  => charge.cost_currency)
     end

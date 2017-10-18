@@ -1,14 +1,14 @@
 require 'spec_helper'
 require 'money-rails/test_helpers'
 
-RSpec.describe ManageIQ::Consumption::ShowbackPool, :type => :model do
+RSpec.describe ManageIQ::Consumption::ShowbackEnvelope, :type => :model do
   before(:each) do
-    ManageIQ::Consumption::ShowbackUsageType.seed
+    ManageIQ::Consumption::ShowbackInputMeasure.seed
   end
   let(:resource)        { FactoryGirl.create(:vm) }
-  let(:pool)            { FactoryGirl.build(:showback_pool) }
-  let(:event)           { FactoryGirl.build(:showback_event, :with_vm_data, :full_month, :resource => resource) }
-  let(:event2)          { FactoryGirl.build(:showback_event, :with_vm_data, :full_month, :resource => resource) }
+  let(:pool)            { FactoryGirl.build(:showback_envelope) }
+  let(:event)           { FactoryGirl.build(:showback_data_rollup, :with_vm_data, :full_month, :resource => resource) }
+  let(:event2)          { FactoryGirl.build(:showback_data_rollup, :with_vm_data, :full_month, :resource => resource) }
   let(:enterprise_plan) { FactoryGirl.create(:showback_price_plan) }
 
   context '#basic lifecycle' do

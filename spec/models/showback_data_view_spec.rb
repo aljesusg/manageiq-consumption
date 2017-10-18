@@ -1,13 +1,13 @@
 require 'spec_helper'
 require 'money-rails/test_helpers'
 
-RSpec.describe ManageIQ::Consumption::ShowbackCharge, :type => :model do
+RSpec.describe ManageIQ::Consumption::ShowbackDataView, :type => :model do
   before(:each) do
-    ManageIQ::Consumption::ShowbackUsageType.seed
+    ManageIQ::Consumption::ShowbackInputMeasure.seed
   end
 
   context 'basic life cycle' do
-    let(:charge) { FactoryGirl.build(:showback_charge) }
+    let(:charge) { FactoryGirl.build(:showback_data_view) }
     let(:cost) { Money.new(1) }
 
     it 'has a valid factory' do

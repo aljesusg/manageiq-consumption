@@ -1,6 +1,6 @@
 FactoryGirl.define do
   factory :showback_rate, :class => ManageIQ::Consumption::ShowbackRate do
-    category               'Vm'
+    entity                 'Vm'
     dimension              'max_number_of_cpu'
     measure                'CPU'
     sequence(:concept)     { |n| "Concept #{n}" }
