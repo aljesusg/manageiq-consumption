@@ -1,4 +1,4 @@
-module ManageIQ::Consumption::ShowbackDataRollup::CPU
+module ManageIQ::Consumption::DataRollup::CPU
   #
   #  Return the average acumulated with the new one
   #

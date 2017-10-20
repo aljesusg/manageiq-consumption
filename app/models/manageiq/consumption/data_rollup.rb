@@ -1,12 +1,13 @@
-class ManageIQ::Consumption::ShowbackDataRollup < ApplicationRecord
+class ManageIQ::Consumption::DataRollup < ApplicationRecord
   belongs_to :resource, :polymorphic => true
 
   has_many :showback_data_views,
            :dependent  => :destroy,
-           :inverse_of => :showback_rollup
+           :inverse_of => :data_rollup
+
   has_many :showback_envelopes,
            :through    => :showback_data_views,
-           :inverse_of => :showback_rollups
+           :inverse_of => :data_rollups
 
   validates :start_time, :end_time, :resource, :presence => true
   validate :start_time_before_end_time
@@ -22,7 +23,7 @@ class ManageIQ::Consumption::ShowbackDataRollup < ApplicationRecord
 
   extend ActiveSupport::Concern
 
-  Dir.glob(Pathname.new(File.dirname(__dir__)).join("consumption/showback_data_rollup/*")).each { |lib| include_concern lib.split("consumption/showback_data_rollup/")[1].split(".rb")[0].upcase }
+  Dir.glob(Pathname.new(File.dirname(__dir__)).join("consumption/data_rollup/*")).each { |lib| include_concern lib.split("consumption/data_rollup/")[1].split(".rb")[0].upcase }
 
   self.table_name = 'showback_data_rollups'
 
@@ -54,19 +55,19 @@ class ManageIQ::Consumption::ShowbackDataRollup < ApplicationRecord
   end
 
   def self.events_between_month(start_of_month, end_of_month)
-    ManageIQ::Consumption::ShowbackDataRollup.where("start_time >= ? AND end_time <= ?",
+    ManageIQ::Consumption::DataRollup.where("start_time >= ? AND end_time <= ?",
                                                DateTime.now.utc.beginning_of_month.change(:month => start_of_month),
                                                DateTime.now.utc.end_of_month.change(:month => end_of_month))
   end
 
   def self.events_actual_month
-    ManageIQ::Consumption::ShowbackDataRollup.where("start_time >= ? AND end_time <= ?",
+    ManageIQ::Consumption::DataRollup.where("start_time >= ? AND end_time <= ?",
                                                DateTime.now.utc.beginning_of_month,
                                                DateTime.now.utc.end_of_month)
   end
 
   def self.events_past_month
-    ManageIQ::Consumption::ShowbackDataRollup.where("start_time >= ? AND end_time <= ?",
+    ManageIQ::Consumption::DataRollup.where("start_time >= ? AND end_time <= ?",
                                                DateTime.now.utc.beginning_of_month - 1.month,
                                                DateTime.now.utc.end_of_month - 1.month)
   end
@@ -179,7 +180,7 @@ class ManageIQ::Consumption::ShowbackDataRollup < ApplicationRecord
   end
 
   def update_charges
-    ManageIQ::Consumption::ShowbackDataView.where(:showback_data_rollup=>self).each do |charge|
+    ManageIQ::Consumption::ShowbackDataView.where(:data_rollup => self).each do |charge|
       if charge.open?
         charge.update_data_snapshot
       end

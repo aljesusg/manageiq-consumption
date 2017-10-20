@@ -8,10 +8,11 @@ class ManageIQ::Consumption::ShowbackEnvelope < ApplicationRecord
 
   before_save :check_pool_state, :if => :state_changed?
 
+
   has_many :showback_data_views,
            :dependent  => :destroy,
            :inverse_of => :showback_envelope
-  has_many :showback_data_rollups,
+  has_many :data_rollups,
            :through    => :showback_data_views,
            :inverse_of => :showback_envelopes
 
@@ -42,26 +43,26 @@ class ManageIQ::Consumption::ShowbackEnvelope < ApplicationRecord
   end
 
   def add_event(event)
-    if event.kind_of?(ManageIQ::Consumption::ShowbackDataRollup)
+    if event.kind_of?(ManageIQ::Consumption::DataRollup)
       # verify that the event is not already there
-      if showback_data_rollups.include?(event)
-        errors.add(:showback_events, 'duplicate')
+      if data_rollups.include?(event)
+        errors.add(:data_rollups, 'duplicate')
       else
-        charge = ManageIQ::Consumption::ShowbackDataView.new(:showback_data_rollup => event,
+        charge = ManageIQ::Consumption::ShowbackDataView.new(:data_rollup => event,
                                                              :showback_envelope => self,
                                                              :start_time => start_time,
                                                              :end_time => end_time)
         charge.save
       end
     else
-      errors.add(:showback_data_rollups, "Error Type #{event.type} is not ManageIQ::Consumption::ShowbackDataRollup")
+      errors.add(:data_rollups, "Error Type #{event.type} is not ManageIQ::Consumption::ShowbackDataRollup")
     end
   end
 
   # Remove events from a pool, no error is thrown
 
   def remove_event(event)
-    if event.kind_of?(ManageIQ::Consumption::ShowbackDataRollup)
+    if event.kind_of?(ManageIQ::Consumption::DataRollup)
       if showback_data_rollups.include?(event)
         showback_data_rollups.delete(event)
       else
@@ -94,7 +95,7 @@ class ManageIQ::Consumption::ShowbackEnvelope < ApplicationRecord
     # updates an existing charge
     if ch
       ch.cost = Money.new(cost)
-    elsif input.class == ManageIQ::Consumption::ShowbackDataRolllup # Or create a new one
+    elsif input.class == ManageIQ::Consumption::DataRolllup # Or create a new one
       ch = showback_data_views.new(:showback_data_rollup => input,
                                 :cost           => cost)
     else
@@ -157,7 +158,7 @@ class ManageIQ::Consumption::ShowbackEnvelope < ApplicationRecord
   end
 
   def find_charge(input)
-    if input.kind_of?(ManageIQ::Consumption::ShowbackDataRollup)
+    if input.kind_of?(ManageIQ::Consumption::DataRollup)
       showback_charges.find_by(:showback_data_rollup => input, :showback_envelope => self)
     elsif input.kind_of?(ManageIQ::Consumption::ShowbackDataView) && (input.showback_envelope == self)
       input

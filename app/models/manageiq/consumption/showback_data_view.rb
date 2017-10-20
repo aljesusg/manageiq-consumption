@@ -5,11 +5,11 @@ class ManageIQ::Consumption::ShowbackDataView < ApplicationRecord
 
   default_value_for :cost, 0
 
-  belongs_to :showback_data_rollup, :inverse_of => :showback_data_views
+  belongs_to :data_rollup, :inverse_of => :showback_data_views, :foreign_key => :showback_data_rollup_id
   belongs_to :showback_envelope,  :inverse_of => :showback_data_views
 
   validates :showback_envelope,  :presence => true, :allow_nil => false
-  validates :showback_data_rollup, :presence => true, :allow_nil => false
+  validates :data_rollup, :presence => true, :allow_nil => false
 
   validate :start_must_be_before_end_time
 
@@ -51,7 +51,7 @@ class ManageIQ::Consumption::ShowbackDataView < ApplicationRecord
   #   can be a timestamp or `Time.now.utc`.
   #
   def data_snapshot_rollup(t = Time.now.utc)
-    data_snapshot[t] = showback_data_rollup.data unless data_snapshot != {}
+    data_snapshot[t] = data_rollup.data unless data_snapshot != {}
   end
 
   # This returns the data information at the start of the pool
@@ -84,7 +84,7 @@ class ManageIQ::Consumption::ShowbackDataView < ApplicationRecord
   # This update the last snapshoot of the event
   def update_data_snapshot(t = Time.now.utc)
     data_snapshot.delete(data_snapshot_last_key) unless data_snapshot.keys.length == 1
-    data_snapshot[t] = showback_data_rollup.data
+    data_snapshot[t] = data_rollup.data
     save
   end
 
