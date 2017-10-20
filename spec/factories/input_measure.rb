@@ -1,5 +1,5 @@
 FactoryGirl.define do
-  factory :showback_input_measure, :class => ManageIQ::Consumption::ShowbackInputMeasure do
+  factory :input_measure, :class => ManageIQ::Consumption::InputMeasure do
     entity                   'Vm'
     sequence(:description)   { |s| "Description #{s}" }
     group                    'CPU'
