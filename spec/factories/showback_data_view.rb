@@ -3,10 +3,13 @@ FactoryGirl.define do
     showback_envelope
     showback_data_rollup
     cost 0
-    stored_data { { } }
+    data_snapshot { { } }
+    context_snapshot { { } }
+    start_time  4.hours.ago
+    end_time    2.hours.ago
 
-    trait :with_stored_data do
-      stored_data do
+    trait :with_data_snapshot do
+      data_snapshot do
         {
           Time.now.utc.beginning_of_month           => {
             "CPU"    => {

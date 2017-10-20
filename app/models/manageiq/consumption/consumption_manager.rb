@@ -58,7 +58,7 @@ class ManageIQ::Consumption::ConsumptionManager
   end
 
   def self.seed
-    ManageIQ::Consumption::ShowbackUsageType.seed
+    ManageIQ::Consumption::InputMeasure.seed
     ManageIQ::Consumption::ShowbackPricePlan.seed
   end
 

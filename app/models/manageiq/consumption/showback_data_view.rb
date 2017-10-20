@@ -1,5 +1,5 @@
 class ManageIQ::Consumption::ShowbackDataView < ApplicationRecord
-  self.table_name = 'showback_dataview'
+  self.table_name = 'showback_data_views'
 
   monetize(:cost_subunits)
 
@@ -39,7 +39,7 @@ class ManageIQ::Consumption::ShowbackDataView < ApplicationRecord
   # A boolean value with true if it's open
   #
   def open?
-    showback_pool.state == "OPEN"
+    showback_envelope.state == "OPEN"
   end
 
   # A stored data is created when you create a charge with a snapshoot of the event
@@ -51,7 +51,7 @@ class ManageIQ::Consumption::ShowbackDataView < ApplicationRecord
   #   can be a timestamp or `Time.now.utc`.
   #
   def data_snapshot_rollup(t = Time.now.utc)
-    data_snapshot[t] = showback_event.data unless data_snapshot != {}
+    data_snapshot[t] = showback_data_rollup.data unless data_snapshot != {}
   end
 
   # This returns the data information at the start of the pool
@@ -84,7 +84,7 @@ class ManageIQ::Consumption::ShowbackDataView < ApplicationRecord
   # This update the last snapshoot of the event
   def update_data_snapshot(t = Time.now.utc)
     data_snapshot.delete(data_snapshot_last_key) unless data_snapshot.keys.length == 1
-    data_snapshot[t] = showback_event.data
+    data_snapshot[t] = showback_data_rollup.data
     save
   end
 
@@ -104,9 +104,9 @@ class ManageIQ::Consumption::ShowbackDataView < ApplicationRecord
 
   def calculate_cost(price_plan = nil)
     # Find the price plan, there should always be one as it is seeded(Enterprise)
-    price_plan ||= showback_pool.find_price_plan
+    price_plan ||= showback_envelope.find_price_plan
     if price_plan.class == ManageIQ::Consumption::ShowbackPricePlan
-      cost = price_plan.calculate_total_cost(showback_event)
+      cost = price_plan.calculate_total_cost(showback_data_rollup)
       save
       cost
     else

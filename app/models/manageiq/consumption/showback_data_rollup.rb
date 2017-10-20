@@ -22,7 +22,7 @@ class ManageIQ::Consumption::ShowbackDataRollup < ApplicationRecord
 
   extend ActiveSupport::Concern
 
-  Dir.glob(Pathname.new(File.dirname(__dir__)).join("consumption/showback_rollup/*")).each { |lib| include_concern lib.split("consumption/showback_rollup/")[1].split(".rb")[0].upcase }
+  Dir.glob(Pathname.new(File.dirname(__dir__)).join("consumption/showback_data_rollup/*")).each { |lib| include_concern lib.split("consumption/showback_data_rollup/")[1].split(".rb")[0].upcase }
 
   self.table_name = 'showback_data_rollups'
 
@@ -44,7 +44,7 @@ class ManageIQ::Consumption::ShowbackDataRollup < ApplicationRecord
 
   def generate_data(data_units = ManageIQ::Consumption::ConsumptionManager.load_column_units)
     clean_data
-    ManageIQ::Consumption::ShowbackInputgroup.all.each do |group_type|
+    ManageIQ::Consumption::InputMeasure.all.each do |group_type|
       next unless resource_type.include?(group_type.entity)
       data[group_type.group] = {}
       group_type.fields.each do |dim|
@@ -179,7 +179,7 @@ class ManageIQ::Consumption::ShowbackDataRollup < ApplicationRecord
   end
 
   def update_charges
-    ManageIQ::Consumption::ShowbackDataview.where(:showback_data_rollup=>self).each do |charge|
+    ManageIQ::Consumption::ShowbackDataView.where(:showback_data_rollup=>self).each do |charge|
       if charge.open?
         charge.update_data_snapshot
       end

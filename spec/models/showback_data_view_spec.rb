@@ -105,7 +105,7 @@ RSpec.describe ManageIQ::Consumption::ShowbackDataView, :type => :model do
   end
 
   context '#stored data' do
-    let(:charge_data) { FactoryGirl.build(:showback_charge, :with_stored_data) }
+    let(:charge_data) { FactoryGirl.build(:showback_charge, :with_data_snapshot) }
     let(:event_for_charge) { FactoryGirl.create(:showback_event) }
     let(:pool_of_event) do
       FactoryGirl.create(:showback_pool,

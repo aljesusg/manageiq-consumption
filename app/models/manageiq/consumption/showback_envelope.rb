@@ -44,10 +44,13 @@ class ManageIQ::Consumption::ShowbackEnvelope < ApplicationRecord
   def add_event(event)
     if event.kind_of?(ManageIQ::Consumption::ShowbackDataRollup)
       # verify that the event is not already there
-      if showback_events.include?(event)
+      if showback_data_rollups.include?(event)
         errors.add(:showback_events, 'duplicate')
       else
-        charge = ManageIQ::Consumption::ShowbackDataView.new(:showback_data_rollup => event, :showback_envelope => self)
+        charge = ManageIQ::Consumption::ShowbackDataView.new(:showback_data_rollup => event,
+                                                             :showback_envelope => self,
+                                                             :start_time => start_time,
+                                                             :end_time => end_time)
         charge.save
       end
     else
@@ -59,8 +62,8 @@ class ManageIQ::Consumption::ShowbackEnvelope < ApplicationRecord
 
   def remove_event(event)
     if event.kind_of?(ManageIQ::Consumption::ShowbackDataRollup)
-      if showback_events.include?(event)
-        showback_events.delete(event)
+      if showback_data_rollups.include?(event)
+        showback_data_rollups.delete(event)
       else
         errors.add(:showback_data_rollups, "not found")
       end
@@ -174,7 +177,7 @@ class ManageIQ::Consumption::ShowbackEnvelope < ApplicationRecord
       ManageIQ::Consumption::ShowbackDataView.create(:data_snapshot    => {
                                                      charge.data_snapshot_last_key => charge.data_snapshot_last
                                                    },
-                                                   :showback_data_rollup => charge.showback_event,
+                                                   :showback_data_rollup => charge.showback_data_rollup,
                                                    :showback_envelope  => pool,
                                                    :cost_subunits  => charge.cost_subunits,
                                                    :cost_currency  => charge.cost_currency)
