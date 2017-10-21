@@ -1,4 +1,4 @@
-class ManageIQ::Consumption::ShowbackDataView < ApplicationRecord
+class ManageIQ::Consumption::DataView < ApplicationRecord
   self.table_name = 'showback_data_views'
 
   monetize(:cost_subunits)
@@ -6,7 +6,7 @@ class ManageIQ::Consumption::ShowbackDataView < ApplicationRecord
   default_value_for :cost, 0
 
   belongs_to :data_rollup, :inverse_of => :showback_data_views, :foreign_key => :showback_data_rollup_id
-  belongs_to :showback_envelope,  :inverse_of => :showback_data_views
+  belongs_to :showback_envelope,  :inverse_of => :showback_data_views, :foreign_key => :showback_envelope_id
 
   validates :showback_envelope,  :presence => true, :allow_nil => false
   validates :data_rollup, :presence => true, :allow_nil => false
@@ -31,7 +31,7 @@ class ManageIQ::Consumption::ShowbackDataView < ApplicationRecord
 
   def start_must_be_before_end_time
     valid = start_time && end_time && start_time < end_time
-    errors.add(:showback_data_view, "start_time must be before end_time") unless valid
+    errors.add(:data_view, "start_time must be before end_time") unless valid
   end
   # Check if the pool is in a Open State
   #
@@ -106,7 +106,7 @@ class ManageIQ::Consumption::ShowbackDataView < ApplicationRecord
     # Find the price plan, there should always be one as it is seeded(Enterprise)
     price_plan ||= showback_envelope.find_price_plan
     if price_plan.class == ManageIQ::Consumption::ShowbackPricePlan
-      cost = price_plan.calculate_total_cost(showback_data_rollup)
+      cost = price_plan.calculate_total_cost(data_rollup)
       save
       cost
     else

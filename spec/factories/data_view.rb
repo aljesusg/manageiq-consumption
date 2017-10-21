@@ -1,5 +1,5 @@
 FactoryGirl.define do
-  factory :showback_data_view, :class => ManageIQ::Consumption::ShowbackDataView do
+  factory :data_view, :class => ManageIQ::Consumption::DataView do
     showback_envelope
     data_rollup
     cost 0
