@@ -396,19 +396,20 @@ describe ManageIQ::Consumption::DataRollup do
 
       it "Assign a pool tag" do
         @file = StringIO.new("name,category,entry\nJD-C-T4.0.1.44,Environment,Test")
-        vm = FactoryGirl.create(:vm, :name => "Environment")
+        vm = FactoryGirl.create(:vm, :name => "JD-C-T4.0.1.44")
         event = FactoryGirl.create(:data_rollup,
                                    :start_time => DateTime.now.utc.beginning_of_month,
                                    :end_time   => DateTime.now.utc.beginning_of_month + 2.days,
                                    :resource   => vm)
-        category = FactoryGirl.create(:classification, :name => 'environment', :description => 'Environment')
-        entry = FactoryGirl.create(:classification, :parent_id => category.id, :name => 'test', :description => 'Test')
-        pool_cat = FactoryGirl.create(:showback_envelope, :resource => category.tag)
+        entity = FactoryGirl.create(:classification, :name => 'environment', :description => 'Environment')
+        entry = FactoryGirl.create(:classification, :parent_id => entity.id, :name => 'test', :description => 'Test')
+        pool_cat = FactoryGirl.create(:showback_envelope, :resource => entity.tag)
         pool_ent = FactoryGirl.create(:showback_envelope, :resource => entry.tag)
         ci = ClassificationImport.upload(@file)
         ci.apply
         vm.reload
         event.collect_tags
+        expect(event.context).to eq("tag" => {"environment" => ["test"]})
         event.assign_by_tag
         expect(pool_ent.data_rollups.include?(event)).to be_truthy
         expect(pool_cat.data_rollups.include?(event)).to be_truthy
@@ -424,22 +425,6 @@ describe ManageIQ::Consumption::DataRollup do
                                    :resource   => vm)
         event.collect_tags
         expect(event.context).to eq("tag" => {})
-      end
-
-      it "Set a tags in context" do
-        @file = StringIO.new("name,entity,entry\nJD-C-T4.0.1.44,Environment,Test")
-        vm = FactoryGirl.create(:vm, :name => "JD-C-T4.0.1.44")
-        event = FactoryGirl.create(:data_rollup,
-                                   :start_time => DateTime.now.utc.beginning_of_month,
-                                   :end_time   => DateTime.now.utc.beginning_of_month + 2.days,
-                                   :resource   => vm)
-        entity = FactoryGirl.create(:classification, :name => 'environment', :description => 'Environment')
-        FactoryGirl.create(:classification, :parent_id => entity.id, :name => 'test', :description => 'Test')
-        ci = ClassificationImport.upload(@file)
-        ci.apply
-        vm.reload
-        event.collect_tags
-        expect(event.context).to eq("tag" => {"environment" => ["test"]})
       end
     end
   end

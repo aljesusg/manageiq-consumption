@@ -118,7 +118,7 @@ class ManageIQ::Consumption::DataRollup < ApplicationRecord
       self.context["tag"] = {} unless self.context.key?("tag")
     end
     resource.tagged_with(:ns => '/managed').each do |tag|
-      entity = tag.classification.entity
+      entity = tag.classification.category
       self.context["tag"][entity] = [] unless self.context["tag"].key?(entity)
       self.context["tag"][entity] << tag.classification.name unless self.context["tag"][entity].include?(tag.classification.name)
     end
